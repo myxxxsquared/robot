@@ -1,14 +1,16 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-project(chatrobot)
+project(chatrobotclient)
 
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/../common/CMake")
+
+add_subdirectory(portaudio portaudio)
 
 # find_package(Boost REQUIRED
 #     COMPONENTS system)
 find_package(Threads REQUIRED)
-find_package(Portaudio REQUIRED)
+# find_package(Portaudio REQUIRED)
 find_package(RT REQUIRED)
 
 
@@ -28,22 +30,21 @@ include_directories(
     ${CMAKE_SOURCE_DIR}
     ${PORTAUDIO_INCLUDE_DIRS}
     ${RT_INCLUDES}
-    ../common)
+    ${CMAKE_SOURCE_DIR}/../common
+    ${CMAKE_SOURCE_DIR}/portaudio/include)
 
-aux_source_directory(. ROOT_SOURCES)
-aux_source_directory(../common COMMON_SOURCES)
+aux_source_directory(${CMAKE_SOURCE_DIR} ROOT_SOURCES)
+aux_source_directory(${CMAKE_SOURCE_DIR}/../common COMMON_SOURCES)
 aux_source_directory(gpio GPIO_SOURCES)
 aux_source_directory(webrtc/common_audio/vad VAD_SOURCES)
 aux_source_directory(webrtc/common_audio/signal_processing SIG_SOURCES)
 
 set(SERIAL_SOURCES
     serial/serial.cc
-    serial/serial.h
-    serial/v8stdint.h
     serial/impl/unix.cc
     serial/impl/list_ports/list_ports_linux.cc)
 
-add_executable(robotaudio
+add_executable(chatrobotclient
     ${ROOT_SOURCES}
     ${COMMON_SOURCES}
     ${SERIAL_SOURCES}
@@ -51,8 +52,9 @@ add_executable(robotaudio
     ${VAD_SOURCES}
     ${SIG_SOURCES})
 
-target_link_libraries(robotaudio
-    ${PORTAUDIO_LIBRARIES}
+target_link_libraries(chatrobotclient
+    # ${PORTAUDIO_LIBRARIES}
+    portaudio
     # ${Boost_LIBRARIES}
     ${RT_LIBRARIES}
     Threads::Threads

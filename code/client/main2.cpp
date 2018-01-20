@@ -42,10 +42,10 @@ int testRobot(){
     return 0;
 }
 
-int main() {
-    std::cout << "Hello, World!" << std::endl;
-//    testSerial();
-    testRobot();
-//    system("pause");
-    return 0;
-}
+// int main() {
+//     std::cout << "Hello, World!" << std::endl;
+// //    testSerial();
+//     testRobot();
+// //    system("pause");
+//     return 0;
+// }

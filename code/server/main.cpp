@@ -7,21 +7,21 @@ string_queue q_in, q_out;
 
 volatile bool signal_exit = false;
 
-int main()
+int main2()
 {
-    try
-    {
-        init_audio();
-        init_threads();
-    }
-    catch(const char* str)
-    {
-        fprintf(stderr, "Error: %s\n", str);
-        return -1;
-    }
+    // try
+    // {
+    //     init_audio();
+    //     init_threads();
+    // }
+    // catch(const char* str)
+    // {2
+    //     fprintf(stderr, "Error: %s\n", str);
+    //     return -1;
+    // }
 
-    while(1)
-        usleep(1000);
+    // while(1)
+    //     usleep(1000);
 
-    exit_audio();
+    // exit_audio();
 }
