@@ -15,11 +15,11 @@ find_package(RT REQUIRED)
 if (CMAKE_BUILD_TYPE MATCHES Debug)
     set(CMAKE_C_FLAGS "-Wall -O0 -ggdb -std=gnu11 -DDEBUG")
     set(CMAKE_CXX_FLAGS "-Wall -O0 -ggdb -std=gnu++14 -DDEBUG")
-    set(CMAKE_EXE_LINKER_FLAGS "-lpthread")
+    set(CMAKE_EXE_LINKER_FLAGS "-Wall -O0 -ggdb -Wl,--no-as-needed")
 else()
     set(CMAKE_C_FLAGS "-flto -Wall -O3 -g -std=gnu11 -DNDEBUG")
     set(CMAKE_CXX_FLAGS "-flto -Wall -O3 -g -std=gnu++14 -DNDEBUG")
-    set(CMAKE_EXE_LINKER_FLAGS "-flto -lpthread")
+    set(CMAKE_EXE_LINKER_FLAGS "-flto -Wall -O3 -g -Wl,--no-as-needed")
 endif()
 
 include_directories(
@@ -54,6 +54,6 @@ add_executable(robotaudio
 target_link_libraries(robotaudio
     ${PORTAUDIO_LIBRARIES}
     # ${Boost_LIBRARIES}
-    # ${RT_LIBRARIES}
-    rt
-    pthread)
+    ${RT_LIBRARIES}
+    Threads::Threads
+    )
