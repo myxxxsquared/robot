@@ -4,7 +4,7 @@
 #include "socketpipe.hpp"
 #include "messageprocess.hpp"
 
-int main()
+int main2()
 {
     MessageProcess proc;
 
