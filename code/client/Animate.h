@@ -10,6 +10,7 @@
 #include <mutex>
 #include <queue>
 #include <vector>
+#include <thread>
 
 #define IDLE_STATE_LEN  4
 

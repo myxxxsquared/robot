@@ -79,7 +79,7 @@ void Animate::Init(){
     IdleState = 0;
 
     p_robot->SetCentre();
-    p_work_thread = new std::thread(&StartWork, this);
+    p_work_thread = new std::thread(&Animate::StartWork, this);
 //    StartWork();
 }
 
