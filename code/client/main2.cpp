@@ -1,5 +1,6 @@
 #include "Serial.h"
 #include "Robot.h"
+#include "Animate.h"
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -24,6 +25,7 @@ int testRobot(){
     auto serial_test_ptr = new Serial();
     serial_test_ptr->arduino_port_name = PORT;
     Robot robot_test(serial_test_ptr);
+    robot_test.InitRobot();
     robot_test.SetCentre();
     std::cout<<"Center Set"<<std::endl;
 
@@ -42,10 +44,20 @@ int testRobot(){
     return 0;
 }
 
-// int main() {
-//     std::cout << "Hello, World!" << std::endl;
-// //    testSerial();
-//     testRobot();
-// //    system("pause");
-//     return 0;
-// }
+int testAnimate(){
+    auto serial_test_ptr = new Serial();
+    serial_test_ptr->arduino_port_name = PORT;
+    Animate animate(serial_test_ptr);
+    animate.Init();
+    std::this_thread::sleep_for(std::chrono::milliseconds(30000));
+    animate.Abort();
+}
+
+int main2() {
+    std::cout << "Hello, World!" << std::endl;
+//    testSerial();
+//    testRobot();
+    testAnimate();
+//    system("pause");
+    return 0;
+}

@@ -169,6 +169,28 @@ public:
         triggerPosition = r.triggerPosition;
     }
 
+    RobotState(const float r_leftHorizontalEye, const float r_rightHorizontalEye, const float r_leftVerticalEye,
+               const float r_rightVerticalEye, const float r_leftEyebrow, const float r_rightEyebrow,
+               const float r_leftEyelid, const float r_rightEyelid, const float r_leftLip,
+               const float r_rightLip, const float r_jaw, const float r_neckTilt, const float r_neckTwist,
+               const int r_position, const int r_triggerPosition) {
+        leftHorizontalEye = r_leftHorizontalEye;
+        rightHorizontalEye = r_rightHorizontalEye;
+        leftVerticalEye = r_leftVerticalEye;
+        rightVerticalEye = r_rightVerticalEye;
+        leftEyebrow = r_leftEyebrow;
+        rightEyebrow = r_rightEyebrow;
+        leftEyelid = r_leftEyelid;
+        rightEyelid = r_rightEyelid;
+        leftLip = r_leftLip;
+        rightLip = r_rightLip;
+        jaw = r_jaw;
+        neckTilt = r_neckTilt;
+        neckTwist = r_neckTwist;
+        position = r_position;
+        triggerPosition = r_triggerPosition;
+    }
+
 };
 
 class Robot {
@@ -262,6 +284,8 @@ public:
 
     ~Robot();
 
+    void InitRobot();
+
     void Reset();
 
     double GetSonar();
@@ -269,6 +293,8 @@ public:
     void SetState(int n_leftHorizontalEye, int n_leftVerticalEye, int n_rightHorizontalEye, int n_rightVerticalEye,
                   int n_leftEyebrow, int n_rightEyebrow, int n_rightEyelid, int n_leftEyelid, int n_leftLip,
                   int n_rightLip, int n_jaw, int n_neckTilt, int n_neckTwist);
+
+    void SetState(RobotState rs);
 
     void SetExpression(std::string name);
 
@@ -290,5 +316,6 @@ public:
 //    void SpeakWord(std::string word);
 };
 
+int convFloatStateValInt(int min, int max, float f_val);
 
 #endif //FRITZ_CONTROL_ROBOT_H

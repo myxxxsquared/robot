@@ -3,7 +3,6 @@
 #include "inputprocess.hpp"
 #include "socketpipe.hpp"
 #include "messageprocess.hpp"
-
 int main()
 {
     MessageProcess proc;

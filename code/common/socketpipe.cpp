@@ -27,8 +27,10 @@ void SocketPipe::init(bool server, const char *ip, int port, bool startrecv)
         if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
             throw std::runtime_error("socket failed");
         int opt = 1;
+#ifndef __CYGWIN__
         if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
             throw std::runtime_error("setsockopt failed");
+#endif
 
         addr_self.sin_family = AF_INET;
         addr_self.sin_addr.s_addr = INADDR_ANY;
