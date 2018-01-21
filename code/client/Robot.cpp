@@ -2,9 +2,19 @@
 // Created by Shikang on 2018/1/18.
 //
 
+#include <iostream>
+#include <chrono>
+#include <thread>
 #include "Robot.h"
 
 CalibrationData::CalibrationData() = default;
+
+int convFloatStateValInt(int min, int max, float f_val){
+//    return (int)(min + (max-min) * f_val);
+    if (f_val == -1) return -1;
+    if (f_val < 0) return -1;
+    return (int)(f_val * 100);  // just conv float to percentage
+}
 
 Robot::Robot(Serial *serial) {
     //serial = new Serial();
@@ -17,22 +27,6 @@ Robot::Robot(Serial *serial) {
     float sonarValue = 1000.0f;
 
     cd = new CalibrationData();  // TODO: this is not yet used
-
-//    RobotState * initState = new RobotState();
-
-//    leftHorizontalEye = f_leftHorizontalEye = initState.leftHorizontalEye;
-//    leftVerticalEye = f_leftVerticalEye = initState.leftVerticalEye;
-//    rightHorizontalEye = f_rightHorizontalEye = initState.rightHorizontalEye;
-//    rightVerticalEye = f_rightVerticalEye = initState.rightVerticalEye;
-//    leftEyebrow = f_leftEyebrow = initState.leftEyebrow;
-//    rightEyebrow = f_rightEyebrow = initState.rightEyebrow;
-//    rightEyelid = f_rightEyelid = initState.rightEyelid;
-//    leftEyelid = f_leftEyelid = initState.leftEyelid;
-//    leftLip = f_leftLip = initState.leftLip;
-//    rightLip = f_rightLip = initState.rightLip;
-//    jaw = f_jaw = initState.jaw;
-//    neckTilt = f_neckTilt = initState.neckTilt;
-//    neckTwist = f_neckTwist = initState.neckTwist;
 
     leftHorizontalEyeMin = -400;
     leftHorizontalEyeMax = 100;
@@ -79,12 +73,21 @@ Robot::Robot(Serial *serial) {
 
     // Prime the distance sensor
     // GetSonar();
-    this->serial->Open();
+//    this->serial->Open();
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 }
 
 Robot::~Robot() {
+    serial->Close();
     delete cd;
 }
+
+void Robot::InitRobot(){
+    this->serial->Open();
+    SetCentre();
+    std::cout<<"--- Robot Inited."<<std::endl;
+}
+
 
 void Robot::Reset() {
     RobotState * initState = new RobotState();
@@ -198,6 +201,23 @@ void Robot::SetState(int n_leftHorizontalEye, int n_leftVerticalEye, int n_right
     if (n_jaw != -1) serial->DoTest(Checked, jawMin, jawMax, jawPin, n_jaw);
 }
 
+void Robot::SetState(RobotState rs) {
+
+    SetState(convFloatStateValInt(leftHorizontalEyeMin, leftHorizontalEyeMax, rs.leftHorizontalEye),
+             convFloatStateValInt(leftVerticalEyeMin, leftVerticalEyeMax, rs.leftVerticalEye),
+             convFloatStateValInt(rightHorizontalEyeMin, rightHorizontalEyeMax, rs.rightHorizontalEye),
+             convFloatStateValInt(rightVerticalEyeMin, rightVerticalEyeMax, rs.rightVerticalEye),
+             convFloatStateValInt(leftEyebrowMin, leftEyebrowMax, rs.leftEyebrow),
+             convFloatStateValInt(rightEyebrowMin,rightEyebrowMax, rs.rightEyebrow),
+             convFloatStateValInt(rightEyelidMin, rightEyelidMax, rs.rightEyelid),
+             convFloatStateValInt(leftEyelidMin, leftEyelidMax, rs.leftEyelid),
+             convFloatStateValInt(leftLipMin, leftLipMax, rs.leftLip),
+             convFloatStateValInt(rightLipMin, rightLipMax, rs.rightLip),
+             convFloatStateValInt(jawMin, jawMax, rs.jaw),
+             convFloatStateValInt(neckTiltMin, neckTiltMax, rs.neckTilt),
+             convFloatStateValInt(neckTwistMin, neckTwistMax, rs.neckTwist));
+}
+
 void Robot::SetExpression(std::string name) {
     if (name == "Afraid")
         SetState(50 /*leftHorizontalEye*/, 70 /*leftVerticalEye*/, 50 /*rightHorizontalEye*/, 70 /*rightVerticalEye*/,
@@ -264,8 +284,6 @@ void Robot::SetExpression(std::string name) {
                  10 /* 50 rightVerticalEye*/, 50 /*leftEyebrow*/, 50 /*rightEyebrow*/, 50 /*rightEyelid*/,
                  50 /*leftEyelid*/, 50 /*leftLip*/, 50 /*rightLip*/, 0 /*jaw*/, 50 /*neckTilt*/, -1 /*neckTwist*/);
 
-
-    //EditState(GetFinalState());
 }
 
 void Robot::SetExpression(int e) {
