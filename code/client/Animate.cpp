@@ -4,6 +4,25 @@
 
 #include "Animate.h"
 #include <iostream>
+StateSeries GetNodSeries(){
+    StateSeries NodSS;
+    NodSS.v_robot_state.push_back(Nod_S0);
+    NodSS.v_robot_state.push_back(Nod_S1);
+    NodSS.v_robot_state.push_back(Nod_S2);
+    NodSS.v_robot_state.push_back(Nod_S3);
+    NodSS.v_robot_state.push_back(Nod_S4);
+    return NodSS;
+}
+
+StateSeries GetSpeakSeries(){
+    StateSeries SpeakSS;
+    SpeakSS.v_robot_state.push_back(CenterState);
+    SpeakSS.v_robot_state.push_back(Speak___);
+    SpeakSS.v_robot_state.push_back(VoidState);
+    SpeakSS.v_robot_state.push_back(VoidState);
+    SpeakSS.v_robot_state.push_back(SpeakFUH);
+    return SpeakSS;
+}
 
 Animate::Animate(Robot* r){
     p_serial = nullptr;
@@ -49,11 +68,12 @@ void Animate::Abort(){
     abort = true;
     q_robot_state = std::queue<RobotState>();
     p_state_mtx->unlock();
+    std::cout<<"--- Robot Terminated."<<std::endl;
 }
 
 void Animate::Init(){
     p_state_mtx->lock();
-    work = true;
+    work = false;
     abort = false;
     p_state_mtx->unlock();
     IdleState = 0;
@@ -67,7 +87,7 @@ void Animate::TransmitState(){
     if(q_state_series.empty()) return;
     StateSeries s = q_state_series.front();
     q_state_series.pop();
-
+    last_action = s;
     for(auto iter = s.v_robot_state.begin(); iter!=s.v_robot_state.end();iter++){
         q_robot_state.push(*iter);
     }
@@ -82,11 +102,20 @@ void Animate::StartWork(){
 void Animate::DoWork(){
     while(true){
         p_state_mtx->lock();
-        if (not work) return;
+//        if (not work) return;
         if (abort) return;
         TransmitState();
-        if(q_robot_state.empty())
-            SetIdle();
+        if(q_robot_state.empty()){
+            if (not work){  // Idle state
+                SetIdle();
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            }
+            else{  // add last action into queue
+                q_state_series.push(last_action);
+                std::cout<<"+++ last continue"<<std::endl;
+                continue;
+            }
+        }
         else{
             next_state = q_robot_state.front();
             q_robot_state.pop();
@@ -98,8 +127,15 @@ void Animate::DoWork(){
     }
 }
 
-void Animate::SetIdle(){
-    IdleState = (IdleState + 1) % 4;
-    next_state = IdleStateLst[IdleState];
+void Animate::ClearWork(){
+    p_state_mtx->lock();
+    work = false;
+    q_state_series = std::queue<StateSeries>();
+    q_robot_state = std::queue<RobotState>();
+    p_state_mtx->unlock();
 }
 
+void Animate::SetIdle(){
+    IdleState = (IdleState + 1) % IDLE_STATE_LEN;
+    next_state = IdleStateLst[IdleState];
+}

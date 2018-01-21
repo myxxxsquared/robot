@@ -44,12 +44,22 @@ int testRobot(){
     return 0;
 }
 
-int testAnimate(){
+
+int testSpeak(){
     auto serial_test_ptr = new Serial();
     serial_test_ptr->arduino_port_name = PORT;
     Animate animate(serial_test_ptr);
     animate.Init();
-    std::this_thread::sleep_for(std::chrono::milliseconds(30000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    auto SpeakSeries = GetSpeakSeries();
+    auto NodSeries = GetNodSeries();
+    animate.q_state_series.push(SpeakSeries);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+    animate.ClearWork();
+    animate.q_state_series.push(NodSeries);
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    animate.ClearWork();
+    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
     animate.Abort();
 }
 
@@ -57,7 +67,8 @@ int main2() {
     std::cout << "Hello, World!" << std::endl;
 //    testSerial();
 //    testRobot();
-    testAnimate();
+//    testAnimate();
+    testSpeak();
 //    system("pause");
     return 0;
 }
