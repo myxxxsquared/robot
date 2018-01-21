@@ -44,6 +44,14 @@ int testRobot(){
     return 0;
 }
 
+int testAnimate(){
+    auto serial_test_ptr = new Serial();
+    serial_test_ptr->arduino_port_name = PORT;
+    Animate animate(serial_test_ptr);
+    animate.Init();
+    std::this_thread::sleep_for(std::chrono::milliseconds(30000));
+    animate.Abort();
+}
 
 int testSpeak(){
     auto serial_test_ptr = new Serial();
@@ -53,7 +61,8 @@ int testSpeak(){
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     auto SpeakSeries = GetSpeakSeries();
     auto NodSeries = GetNodSeries();
-    animate.q_state_series.push(SpeakSeries);
+//    animate.q_state_series.push(SpeakSeries);
+    animate.SetContinuousWork(SpeakSeries);
     std::this_thread::sleep_for(std::chrono::milliseconds(10000));
     animate.ClearWork();
     animate.q_state_series.push(NodSeries);

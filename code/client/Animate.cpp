@@ -102,7 +102,6 @@ void Animate::StartWork(){
 void Animate::DoWork(){
     while(true){
         p_state_mtx->lock();
-//        if (not work) return;
         if (abort) return;
         TransmitState();
         if(q_robot_state.empty()){
@@ -112,7 +111,8 @@ void Animate::DoWork(){
             }
             else{  // add last action into queue
                 q_state_series.push(last_action);
-                std::cout<<"+++ last continue"<<std::endl;
+                p_state_mtx->unlock();
+//                std::cout<<"+++ last continue"<<std::endl;
                 continue;
             }
         }
@@ -123,8 +123,15 @@ void Animate::DoWork(){
         p_state_mtx->unlock();
 
         p_robot->SetState(next_state);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500)); // TODO: check
+        std::this_thread::sleep_for(std::chrono::milliseconds(300)); // TODO: check
     }
+}
+
+void Animate::SetContinuousWork(StateSeries ss){
+    p_state_mtx->lock();
+    work = true;
+    q_state_series.push(ss);
+    p_state_mtx->unlock();
 }
 
 void Animate::ClearWork(){
