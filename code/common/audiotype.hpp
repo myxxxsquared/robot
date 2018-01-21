@@ -2,8 +2,10 @@
 #ifndef AUDIOTYPE_HEADER
 #define AUDIOTYPE_HEADER
 
-#include <portaudio.h>
 #include <vector>
+
+typedef unsigned long PaSampleFormat;
+#define paInt16          ((PaSampleFormat) 0x00000008)
 
 const int INPUT_SAMPLERATE = 16000;
 const int INPUT_TRUNKSIZE = 160;

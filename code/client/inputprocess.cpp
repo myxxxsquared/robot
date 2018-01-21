@@ -139,6 +139,7 @@ void InputProcess::send(const AudioInputStruct &data)
 {
     AudioDataMessage *msg = new AudioDataMessage(data);
     pipe->sendmsg(msg);
+    msg = new AudioDataMessage(data);
     proc->put_message(msg);
 }
 

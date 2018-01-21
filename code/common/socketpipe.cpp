@@ -17,7 +17,7 @@ SocketPipe::SocketPipe(MessageProcess* p)
 {
 }
 
-void SocketPipe::init(bool server, const char *ip, int port, bool startrecv)
+void SocketPipe::init(bool server, const char *ip, int port)
 {
     struct sockaddr_in addr_self, addr_other;
 
@@ -60,10 +60,31 @@ void SocketPipe::init(bool server, const char *ip, int port, bool startrecv)
             throw std::runtime_error("connect failed");
     }
 
-    if(startrecv)
+    std::thread th{SocketPipe::recv_thread_static, this};
+    this->thread_recv = std::move(th);
+
+    std::thread th2{SocketPipe::send_thread_static, this};
+    this->thread_send = std::move(th2);
+}
+
+void SocketPipe::send_thread_static(SocketPipe* pipe)
+{
+    pipe->send_thread();
+}
+
+void SocketPipe::send_thread()
+{
+    while(true)
     {
-        std::thread th{SocketPipe::recv_thread_static, this};
-        this->thread_recv = std::move(th);
+        const Message *msg;
+        {
+            std::unique_lock<std::mutex> lock{this->mutex_send};
+            cv_send.wait(lock, [&](){return !queue_send.empty();});
+            msg = queue_send.front();
+        }
+
+        sendmsg_sync(msg);
+        delete msg;
     }
 }
 
@@ -109,15 +130,20 @@ Message* SocketPipe::recvmsg()
 
 void SocketPipe::sendmsg(const Message* msg)
 {
-    std::unique_lock<std::mutex> lock{m_send};
+    std::unique_lock<std::mutex> lock{mutex_send};
+    queue_send.emplace_back(msg);
+    cv_send.notify_one();
+}
+
+void SocketPipe::sendmsg_sync(const Message* msg)
+{
     send(&msg->type, sizeof(msg->type));
     msg->sendto(*this);
 }
 
 void SocketPipe::sendmsg_tag(Message::Type t)
 {
-    std::unique_ptr<Message> msg{Message::construct(t)};
-    sendmsg(msg.get());
+    sendmsg(Message::construct(t));
 }
 
 void SocketPipe::recv_thread_static(SocketPipe* pipe)

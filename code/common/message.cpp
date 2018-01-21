@@ -35,6 +35,8 @@ Message *Message::construct(Message::Type t)
     case Message::Type::AudioEnd:
     case Message::Type::SpeechBegin:
     case Message::Type::SpeechEnd:
+    case Message::Type::GazeBegin:
+    case Message::Type::GazeEnd:
         return new Message(t);
     case Message::Type::AudioData:
         return new AudioDataMessage();

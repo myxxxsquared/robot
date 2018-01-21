@@ -13,6 +13,7 @@ public:
         None,
         AudioBegin, AudioEnd, AudioData,
         SpeechBegin, SpeechEnd, SpeechData,
+        GazeBegin, GazeEnd,
         DOA,
         Exit
     } type;

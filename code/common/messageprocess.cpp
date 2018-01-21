@@ -2,6 +2,11 @@
 
 #include "messageprocess.hpp"
 
+MessageProcess::MessageProcess(std::function<void(const Message *msg)> p)
+    : processor(p)
+{
+}
+
 void MessageProcess::put_message(const Message *msg)
 {
     std::unique_lock<std::mutex> lock(mut_msg);
@@ -24,16 +29,7 @@ void MessageProcess::process_message()
             que_msg.pop_front();
         }
 
-        switch (msg->type)
-        {
-        case Message::Type::None:
-            break;
-        case Message::Type::Exit:
-            ctn = false;
-            break;
-        default:
-            break;
-        }
+        processor(msg);
 
         delete msg;
     }

@@ -1,27 +1,24 @@
 
-#include "chatrobot.hpp"
-#include <unistd.h>
+#include "messageprocess.hpp"
+#include "socketpipe.hpp"
+#include "headdirection.hpp"
 
-frame_queue q_record, q_play;
-string_queue q_in, q_out;
+const char *const SERVER_IP_ADDRESS = "192.168.1.101";
+const int SERVER_PORT = 8999;
 
-volatile bool signal_exit = false;
-
-int main2()
+void ProcessMessageServer(const Message *msg)
 {
-    // try
-    // {
-    //     init_audio();
-    //     init_threads();
-    // }
-    // catch(const char* str)
-    // {2
-    //     fprintf(stderr, "Error: %s\n", str);
-    //     return -1;
-    // }
 
-    // while(1)
-    //     usleep(1000);
+}
 
-    // exit_audio();
+int main()
+{
+    MessageProcess proc{ProcessMessageServer};
+    SocketPipe pipe{&proc};
+    pipe.init(false, SERVER_IP_ADDRESS, SERVER_PORT);
+
+    HeadDirection head{&pipe};
+    head.start();
+
+    proc.process_message();
 }
