@@ -59,6 +59,7 @@ void ProcessMessageClinet(const Message *msg)
         break;
     case Message::Type::SpeechBegin:
     {
+	std::cout<<"--- SpeechBegin"<<std::endl;
         p_animate->SetContinuousWork(SpeakSeries);
     }
         break;
@@ -69,7 +70,8 @@ void ProcessMessageClinet(const Message *msg)
     }
     break;
     case Message::Type::SpeechEnd:
-    {
+    {   
+	std::cout<<"+++ SpeechEnd"<<std::endl;
         p_animate->ClearWork();
     }
         break;
