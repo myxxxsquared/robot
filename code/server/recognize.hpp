@@ -4,7 +4,7 @@
 
 #include "forkandpipe.hpp"
 #include <sstream>
-#include "datatypes.hpp"
+#include "safequeue.hpp"
 
 class Message;
 
@@ -13,14 +13,14 @@ class Recognize
   public:
     ForkAndPipe pipe;
     std::stringstream ss;
-    SAFE_DEQUE<const Message *> *queue_in;
-    SAFE_DEQUE<std::string> *queue_instr;
+    safe_queue<const Message *> *queue_in;
+    safe_queue<std::string> *queue_instr;
 
     bool first = false;
     bool inited = false;
     const char *session_id;
 
-    Recognize(SAFE_DEQUE<const Message *> *qi, SAFE_DEQUE<std::string> *qo);
+    Recognize(safe_queue<const Message *> *qi, safe_queue<std::string> *qo);
 
     void do_recognize();
     void write_audio(const void *buffer);

@@ -1,5 +1,5 @@
 
-#include "chatrobot.hpp"
+
 #include "json.hpp"
 using json = nlohmann::json;
 
@@ -13,7 +13,7 @@ using json = nlohmann::json;
 static const char* API_KEY = "aaa31673c154432e92ae0d56c0bdd320";
 static const char* URL = "http://www.tuling123.com/openapi/api";
 
-Dialog::Dialog(SAFE_DEQUE<std::string> *qi, SAFE_DEQUE<std::string> *qo)
+Dialog::Dialog(safe_queue<std::string> *qi, safe_queue<std::string> *qo)
     : queue_instr(qi), queue_out(qo)
 {
 }

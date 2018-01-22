@@ -1,5 +1,5 @@
 
-#include "chatrobot.hpp"
+
 #include "qtts.h"
 #include "msp_cmn.h"
 #include "msp_errors.h"
@@ -14,7 +14,7 @@
 
 #include "generate.hpp"
 
-Generate::Generate(SocketPipe *sp, SAFE_DEQUE<std::string> *q)
+Generate::Generate(SocketPipe *sp, safe_queue<std::string> *q)
     : socketpipe(sp), queue_out(q)
 {
 }

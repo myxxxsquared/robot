@@ -9,7 +9,6 @@ add_subdirectory(curlpp curlpp)
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/../common/CMake")
 
 find_package(Threads REQUIRED)
-# find_package(CURLpp REQUIRED)
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
     set(CMAKE_C_FLAGS "-Wall -O0 -ggdb -std=gnu11 -DDEBUG")

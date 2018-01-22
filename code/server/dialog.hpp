@@ -1,16 +1,16 @@
 
-#include "datatypes.hpp"
+#include "safequeue.hpp"
 
 class Dialog
 {
 public:
-    SAFE_DEQUE<std::string> *queue_instr;
-    SAFE_DEQUE<std::string> *queue_out;
+    safe_queue<std::string> *queue_instr;
+    safe_queue<std::string> *queue_out;
 
     static const int UID_LENGTH = 32;
     char USERID[UID_LENGTH + 1];
 
-    Dialog(SAFE_DEQUE<std::string> *qi, SAFE_DEQUE<std::string> *qo);
+    Dialog(safe_queue<std::string> *qi, safe_queue<std::string> *qo);
 
     void dialog();
     void do_dialog();

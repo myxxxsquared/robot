@@ -1,5 +1,4 @@
 
-#include "chatrobot.hpp"
 
 #include "qisr.h"
 #include "msp_cmn.h"
@@ -13,7 +12,7 @@
 #include "forkandpipe.hpp"
 #include "recognize.hpp"
 
-Recognize::Recognize(SAFE_DEQUE<const Message *> *qi, SAFE_DEQUE<std::string> *qo)
+Recognize::Recognize(safe_queue<const Message *> *qi, safe_queue<std::string> *qo)
     : queue_in(qi), queue_instr(qo)
 {
 }
@@ -126,7 +125,7 @@ void Recognize::recognize_parent()
         }
         else
         {
-            SAFE_DEQUE_USE<const Message *> top{*queue_in};
+            safe_queue_use<const Message *> top{*queue_in};
             switch ((*top)->type)
             {
             case Message::Type::AudioBegin:

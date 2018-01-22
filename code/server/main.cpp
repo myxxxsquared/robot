@@ -2,7 +2,7 @@
 #include "messageprocess.hpp"
 #include "socketpipe.hpp"
 #include "headdirection.hpp"
-#include "chatrobot.hpp"
+#include "safequeue.hpp"
 
 #include "dialog.hpp"
 #include "recognize.hpp"
@@ -10,11 +10,6 @@
 
 const char *const SERVER_IP_ADDRESS = "192.168.1.101";
 const int SERVER_PORT = 8999;
-
-std::thread thread_dialog, thread_recognize, thread_generate;
-
-frame_queue q_record, q_play;
-string_queue q_in, q_out;
 
 void ProcessMessageServer(const Message *msg)
 {
@@ -38,9 +33,10 @@ void do_generate(Generate *obj)
 
 int main()
 {
-    SAFE_DEQUE<const Message*> queue_in;
-    SAFE_DEQUE<std::string> queue_instr;
-    SAFE_DEQUE<std::string> queue_out;
+    std::thread thread_dialog, thread_recognize, thread_generate;
+    safe_queue<const Message*> queue_in;
+    safe_queue<std::string> queue_instr;
+    safe_queue<std::string> queue_out;
 
     MessageProcess proc{ProcessMessageServer};
     SocketPipe pipe{&proc};
