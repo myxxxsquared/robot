@@ -8,6 +8,9 @@
 #include "headdirection.hpp"
 #include "debug_throw.hpp"
 
+#include "socketpipe.hpp"
+#include "message.hpp"
+
 using namespace std;
 using namespace cv;
 
@@ -98,6 +101,9 @@ void HeadDirection::process_proc()
         auto all_features = estimator.update(frame);
         auto poses = estimator.poses();
 
+        cv::imshow("thisframe", frame);
+        cv::waitKey(1);
+
         bool haveface = false;
 
         for (auto pose : poses)
@@ -138,6 +144,7 @@ void HeadDirection::process_proc()
                 {
                     current = false;
                     pipe->sendmsg_tag(Message::Type::GazeEnd);
+                    printf("GAZE: BEGIN\n");
                     delay = 0;
                 }
             }
@@ -151,6 +158,7 @@ void HeadDirection::process_proc()
                 {
                     current = true;
                     pipe->sendmsg_tag(Message::Type::GazeBegin);
+                    printf("GAZE: END\n");
                     delay = 0;
                 }
             }

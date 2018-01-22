@@ -56,13 +56,13 @@ int main()
     Recognize recognize{&queue_in, &queue_instr};
     Dialog dialog{&queue_instr, &queue_out};
     Generate generate{&pipe, &queue_out};
-    // HeadDirection head{&pipe};
+    HeadDirection head{&pipe};
 
     pipe.init(false, SERVER_IP_ADDRESS, SERVER_PORT);
     thread_dialog = std::thread(do_dialog, &dialog);
     thread_recognize = std::thread(do_recognize, &recognize);
     thread_generate = std::thread(do_generate, &generate);
-    // head.start();
+    head.start();
 
     proc.process_message();
 }
