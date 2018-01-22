@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <stdexcept>
 #include <cstring>
+#include <cassert>
 
 #include "micarray.hpp"
 #include "debug_throw.hpp"
@@ -135,6 +136,36 @@ int MicArray::outputCallback(
     const PaStreamCallbackTimeInfo *timeInfo,
     PaStreamCallbackFlags statusFlags)
 {
+    // assert(frameCount == OUTPUT_TRUNKSIZE);
+    {
+        safe_queue_use<AudioOutputBuffer> use{queue_output, true};
+        if(!use.vaild)
+        {
+            memset(output, 0, sizeof(AudioOutputBuffer));
+        }
+        else
+        {
+            memcpy(output, (*use).data, sizeof(AudioOutputBuffer));
+        }
+    }
+
+        //     safe_queue_use<AudioOutputBuffer> use{queue_output, true};
+        // if(!use.vaild)
+        // {
+        //     short *o = (short *)output;
+        //     for(int i = 0; i < OUTPUT_TRUNKSIZE; ++i, ++o)
+        //         *o = 0;
+        // }
+        // else
+        // {
+        //     const short *d = (*use).data;
+        //     short *o = (short *)output;
+
+        //     for(int i = 0; i < OUTPUT_TRUNKSIZE; ++i, ++o, ++d)
+        //         *o = *d;
+        // }
+
+
     return paContinue;
 }
 

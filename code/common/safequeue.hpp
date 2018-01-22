@@ -56,7 +56,6 @@ public:
         : queue(q)
     {
         mutex = std::unique_lock<std::mutex>(q.mutex);
-
         if(!tryget)
         {
             q.cv.wait(mutex, [&](){ return !q.queue.empty(); });
@@ -67,7 +66,7 @@ public:
             if(q.queue.empty())
             {
                 vaild = false;
-                mutex.release();
+                mutex.unlock();
             }
             else
             {
@@ -78,17 +77,10 @@ public:
 
     ~safe_queue_use()
     {
-        release();
-    }
-
-    void release()
-    {
         if(vaild)
         {
-            mutex.release();
             queue.queue.pop_front();
         }
-        vaild=false;
     }
 
     safe_queue_use(const safe_queue_use<T>&) = delete;

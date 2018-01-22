@@ -5,6 +5,8 @@
 #include "messageprocess.hpp"
 #include "debug_throw.hpp"
 
+MicArray *parray;
+
 void ProcessMessageClinet(const Message *msg)
 {
     switch(msg->type)
@@ -22,6 +24,10 @@ void ProcessMessageClinet(const Message *msg)
         case Message::Type::SpeechBegin:
         break;
         case Message::Type::SpeechData:
+        {
+            auto msg2 = dynamic_cast<const SpeechDataMessage*>(msg);
+            parray->queue_output.emplace((void *)msg2->data.data());
+        }
         break;
         case Message::Type::SpeechEnd:
         break;
@@ -39,7 +45,9 @@ int main()
     pipe.init(true, NULL, 8999);
 
     MicArray mic;
+    parray = &mic;
     InputProcess inp{&mic, &pipe, &proc};
+
     mic.start();
     inp.start_process();
     proc.process_message();

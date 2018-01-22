@@ -15,10 +15,10 @@
 
 const int INPUT_DOA_TRUNKS = 20;
 
-const int ON_CHANGE = 5;
-const int OFF_CHANGE = 5;
-const int OFF_APPEND_DATA = 10;
-const int DATA_MAX_SIZE = 20;
+const int ON_CHANGE = 20;
+const int OFF_CHANGE = 20;
+const int OFF_APPEND_DATA = 40;
+const int DATA_MAX_SIZE = 40;
 
 InputProcess::InputProcess(MicArray *m, SocketPipe *p, MessageProcess *pr)
     : cv_start(),

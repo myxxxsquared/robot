@@ -48,10 +48,11 @@ void Generate::generate()
     int synth_status = MSP_TTS_FLAG_STILL_HAVE_DATA;
 
     int tempbufferlen = 0;
-    char *tempbuffer = new char[INPUT_TRUNKSIZE_BYTE];
+    char *tempbuffer = new char[OUTPUT_TRUNKSIZE_BYTE];
 
     while(true)
     {
+        audio_len = OUTPUT_TRUNKSIZE;
         const char* data = (const char*)QTTSAudioGet(sessionID, &audio_len, &synth_status, &ret);
         if (MSP_SUCCESS != ret)
             break;
@@ -59,15 +60,15 @@ void Generate::generate()
         {
             if(tempbufferlen)
             {
-                if(tempbufferlen+audio_len >= INPUT_TRUNKSIZE_BYTE)
+                if(tempbufferlen+audio_len >= OUTPUT_TRUNKSIZE_BYTE)
                 {
-                    int left_size = INPUT_TRUNKSIZE_BYTE - tempbufferlen;
+                    int left_size = OUTPUT_TRUNKSIZE_BYTE - tempbufferlen;
                     memcpy(tempbuffer+tempbufferlen, data, left_size);
                     audio_len -= left_size;
                     data += left_size;
                     int len = 1;
                     pipe.write(&len, sizeof(len), 1);
-                    pipe.write(tempbuffer, INPUT_TRUNKSIZE_BYTE, 1);
+                    pipe.write(tempbuffer, OUTPUT_TRUNKSIZE_BYTE, 1);
                     tempbufferlen = 0;
                 }
                 else
@@ -78,13 +79,13 @@ void Generate::generate()
                 }
             }
 
-            while(audio_len > INPUT_TRUNKSIZE_BYTE)
+            while(audio_len > OUTPUT_TRUNKSIZE_BYTE)
             {
                 int len = 1;
                 pipe.write(&len, sizeof(len), 1);
-                pipe.write(data, INPUT_TRUNKSIZE_BYTE, 1);
-                data += INPUT_TRUNKSIZE_BYTE;
-                audio_len -= INPUT_TRUNKSIZE_BYTE;
+                pipe.write(data, OUTPUT_TRUNKSIZE_BYTE, 1);
+                data += OUTPUT_TRUNKSIZE_BYTE;
+                audio_len -= OUTPUT_TRUNKSIZE_BYTE;
             }
 
             if(audio_len > 0)
@@ -103,10 +104,10 @@ void Generate::generate()
     if(tempbufferlen)
     {
         int len = 1;
-        memset(tempbuffer+tempbufferlen, 0, INPUT_TRUNKSIZE_BYTE-tempbufferlen);
+        memset(tempbuffer+tempbufferlen, 0, OUTPUT_TRUNKSIZE_BYTE-tempbufferlen);
         tempbufferlen = 0;
         pipe.write(&len, sizeof(int), 1);
-        pipe.write(tempbuffer, INPUT_TRUNKSIZE_BYTE, 1);
+        pipe.write(tempbuffer, OUTPUT_TRUNKSIZE_BYTE, 1);
     }
 
     QTTSSessionEnd(sessionID, "END");
@@ -128,7 +129,7 @@ void Generate::generate_child()
 
 void Generate::generate_parent()
 {
-    char* buffer = new char[INPUT_TRUNKSIZE_BYTE];
+    char* buffer = new char[OUTPUT_TRUNKSIZE_BYTE];
 
     while(true)
     {
@@ -137,6 +138,7 @@ void Generate::generate_parent()
         pipe.write(&len, sizeof(int), 1);
         pipe.write(str.c_str(), len, 1);
 
+        printf("SPEECH: BEGIN\n");
         socketpipe->sendmsg(Message::construct(Message::Type::SpeechBegin));
         while(true)
         {
@@ -144,12 +146,13 @@ void Generate::generate_parent()
             pipe.read(&status, sizeof(int), 1);
             if(status == 0)
                 break;
-            pipe.read(buffer, INPUT_TRUNKSIZE_BYTE, 1);
+            pipe.read(buffer, OUTPUT_TRUNKSIZE_BYTE, 1);
             SpeechDataMessage *msg = new SpeechDataMessage();
-            msg->data.resize(INPUT_TRUNKSIZE);
-            memcpy(msg->data.data(), buffer, INPUT_TRUNKSIZE_BYTE);
+            msg->data.resize(OUTPUT_TRUNKSIZE);
+            memcpy(msg->data.data(), buffer, OUTPUT_TRUNKSIZE_BYTE);
             socketpipe->sendmsg(msg);
         }
+        printf("SPEECH: END\n");
         socketpipe->sendmsg(Message::construct(Message::Type::SpeechEnd));
     }
 }

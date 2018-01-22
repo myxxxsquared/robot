@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "audiotype.hpp"
+#include "safequeue.hpp"
 
 class MicArray
 {
@@ -18,6 +19,8 @@ class MicArray
     std::mutex mutex_input;
     std::condition_variable cv_input;
     AudioInputBuffer buffer_input;
+
+    safe_queue<AudioOutputBuffer> queue_output;
 
     MicArray();
     ~MicArray();
