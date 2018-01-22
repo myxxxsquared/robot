@@ -4,9 +4,22 @@
 #include "socketpipe.hpp"
 #include "messageprocess.hpp"
 #include "debug_throw.hpp"
+#include "Animate.h"
+#include "StateSeries.h"
+
+#ifdef __CYGWIN__
+#define PORT "/dev/ttyS3"
+#define VIRTUAL_PORT "/dev/ttyS4"
+#elif defined(__unix__)
+#define PORT "/dev/ttyUSB0"
+#endif
 
 MicArray *parray;
 InputProcess *pinp;
+
+Animate* p_animate;
+auto SpeakSeries = GetSpeakSeries();
+auto NodSeries = GetNodSeries();
 
 void ProcessMessageClinet(const Message *msg)
 {
@@ -22,7 +35,7 @@ void ProcessMessageClinet(const Message *msg)
         break;
     case Message::Type::DOA:
     {
-        
+
     }
         break;
     case Message::Type::GazeBegin:
@@ -41,6 +54,7 @@ void ProcessMessageClinet(const Message *msg)
         break;
     case Message::Type::SpeechBegin:
     {
+        p_animate->SetContinuousWork(SpeakSeries);
     }
         break;
     case Message::Type::SpeechData:
@@ -50,6 +64,9 @@ void ProcessMessageClinet(const Message *msg)
     }
     break;
     case Message::Type::SpeechEnd:
+    {
+        p_animate->ClearWork();
+    }
         break;
     default:
         my_throw("invaild message type");
@@ -59,6 +76,11 @@ void ProcessMessageClinet(const Message *msg)
 
 int main()
 {
+    auto serial_test_ptr = new Serial();
+    serial_test_ptr->arduino_port_name = PORT;
+    p_animate = new Animate(serial_test_ptr);
+    p_animate->Init();
+
     MessageProcess proc(ProcessMessageClinet);
 
     SocketPipe pipe{&proc};
