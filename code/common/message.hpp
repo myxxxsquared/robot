@@ -34,10 +34,10 @@ public:
 class AudioDataMessage : public Message
 {
 public:
-    AudioInputStruct data;
+    AudioInputArray data;
 
     AudioDataMessage();
-    explicit AudioDataMessage(const AudioInputStruct &data);
+    explicit AudioDataMessage(const AudioInputArray &data);
     virtual void sendto(SocketPipe& pipe) const;
     virtual void recvfrom(SocketPipe& pipe);
 };

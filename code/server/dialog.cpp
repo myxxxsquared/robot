@@ -8,20 +8,22 @@ using json = nlohmann::json;
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
 
-constexpr int UID_LENGTH = 32;
+#include "dialog.hpp"
+
 static const char* API_KEY = "aaa31673c154432e92ae0d56c0bdd320";
 static const char* URL = "http://www.tuling123.com/openapi/api";
-static char USERID[UID_LENGTH + 1];
 
-static void dialog()
+Dialog::Dialog(SAFE_DEQUE<std::string> *qi, SAFE_DEQUE<std::string> *qo)
+    : queue_instr(qi), queue_out(qo)
+{
+}
+
+void Dialog::dialog()
 {
     std::string str;
     std::string poststr;
 
-    {
-        string_queue_use use{q_in};
-        str = *use;
-    }
+    str = queue_instr->pop();
 
     {
         json post;
@@ -52,10 +54,10 @@ static void dialog()
         poststr = result["text"];
     }
 
-    q_out.emplace(poststr);
+    queue_out->emplace(std::move(poststr));
 }
 
-void* do_dialog(void*)
+void Dialog::do_dialog()
 {
     srand((unsigned int)time(NULL));
     for(int i = 0; i < UID_LENGTH; ++i)
@@ -70,7 +72,7 @@ void* do_dialog(void*)
     }
     USERID[UID_LENGTH] = 0;
 
-    while(!signal_exit)
+    while(true)
         dialog();
-    return NULL;
 }
+

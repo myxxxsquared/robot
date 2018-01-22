@@ -7,49 +7,47 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-static char tempbuffer[BUFFER_SIZE];
-static int tempbufferlen = 0;
+#include "forkandpipe.hpp"
+#include "message.hpp"
+#include "messageprocess.hpp"
+#include "socketpipe.hpp"
 
-static FILE* file_generate[2];
-static char generate_buffer[BUFFER_SIZE];
+#include "generate.hpp"
 
-static void generate()
+Generate::Generate(SocketPipe *sp, SAFE_DEQUE<std::string> *q)
+    : socketpipe(sp), queue_out(q)
 {
-    int dummy = 0;
-    myfwrite(&dummy, sizeof(int), 1, file_generate[1]);
-    fflush(file_generate[1]);
-    dummy = 1;
+}
 
+void Generate::generate()
+{
     std::string str;
+
     {
         int len;
-        myfread(&len, sizeof(int), 1, file_generate[0]);
-        char* text = (char*)malloc(len);
-        myfread(text, len, 1, file_generate[0]);
+        pipe.read(&len, sizeof(int), 1);
+        char* text = new char[len];
+        pipe.read(text, len, 1);
         str = text;
-        free(text);
+        delete[] text;
     }
-
-    fprintf(stderr, "OUT: %s\n", str.c_str());
 
     int ret = -1;
     const char* params = "voice_name = xiaofeng, text_encoding = utf8, sample_rate = 16000, speed = 50, volume = 50, pitch = 50, rdn = 2";
     const char* sessionID = QTTSSessionBegin(params, &ret);
     if (MSP_SUCCESS != ret)
-    {
-        fprintf(stderr, "QTTSSessionBegin() failed\n");
-        throw "QTTSSessionBegin() failed";
-    }
-        
+        throw std::runtime_error("QTTSSessionBegin() failed");
+
     ret = QTTSTextPut(sessionID, str.c_str(), str.size(), NULL);
     if (MSP_SUCCESS != ret)
-    {
-        fprintf(stderr, "QTTSTextPut() failed\n");
-        throw "QTTSTextPut() failed";
-    }
+        throw std::runtime_error("QTTSTextPut() failed");
 
     unsigned int audio_len = 0;
     int synth_status = MSP_TTS_FLAG_STILL_HAVE_DATA;
+
+    int tempbufferlen = 0;
+    char *tempbuffer = new char[INPUT_TRUNKSIZE_BYTE];
+
     while(true)
     {
         const char* data = (const char*)QTTSAudioGet(sessionID, &audio_len, &synth_status, &ret);
@@ -59,15 +57,15 @@ static void generate()
         {
             if(tempbufferlen)
             {
-                if(tempbufferlen+audio_len >= BUFFER_SIZE)
+                if(tempbufferlen+audio_len >= INPUT_TRUNKSIZE_BYTE)
                 {
-                    int left_size = BUFFER_SIZE - tempbufferlen;
+                    int left_size = INPUT_TRUNKSIZE_BYTE - tempbufferlen;
                     memcpy(tempbuffer+tempbufferlen, data, left_size);
                     audio_len -= left_size;
                     data += left_size;
-                    myfwrite(&dummy, sizeof(int), 1, file_generate[1]);
-                    myfwrite(tempbuffer, BUFFER_SIZE, 1, file_generate[1]);
-                    fflush(file_generate[1]);
+                    int len = 1;
+                    pipe.write(&len, sizeof(len), 1);
+                    pipe.write(tempbuffer, INPUT_TRUNKSIZE_BYTE, 1);
                     tempbufferlen = 0;
                 }
                 else
@@ -78,13 +76,13 @@ static void generate()
                 }
             }
 
-            while(audio_len > BUFFER_SIZE)
+            while(audio_len > INPUT_TRUNKSIZE_BYTE)
             {
-                myfwrite(&dummy, sizeof(int), 1, file_generate[1]);
-                myfwrite(data, BUFFER_SIZE, 1, file_generate[1]);
-                fflush(file_generate[1]);
-                data += BUFFER_SIZE;
-                audio_len -= BUFFER_SIZE;
+                int len = 1;
+                pipe.write(&len, sizeof(len), 1);
+                pipe.write(data, INPUT_TRUNKSIZE_BYTE, 1);
+                data += INPUT_TRUNKSIZE_BYTE;
+                audio_len -= INPUT_TRUNKSIZE_BYTE;
             }
 
             if(audio_len > 0)
@@ -96,101 +94,72 @@ static void generate()
         if (MSP_TTS_FLAG_DATA_END == synth_status)
             break;
     }
+
     if (MSP_SUCCESS != ret)
-    {
-        fprintf(stderr, "QTTSAudioGet() failed\n");
-        throw "QTTSAudioGet() failed";
-    }
+        throw std::runtime_error("QTTSAudioGet() failed");
 
     if(tempbufferlen)
     {
-        memset(tempbuffer+tempbufferlen, 0, BUFFER_SIZE-tempbufferlen);
+        int len = 1;
+        memset(tempbuffer+tempbufferlen, 0, INPUT_TRUNKSIZE_BYTE-tempbufferlen);
         tempbufferlen = 0;
-        myfwrite(&dummy, sizeof(int), 1, file_generate[1]);
-        myfwrite(tempbuffer, BUFFER_SIZE, 1, file_generate[1]);
-        fflush(file_generate[1]);
+        pipe.write(&len, sizeof(int), 1);
+        pipe.write(tempbuffer, INPUT_TRUNKSIZE_BYTE, 1);
     }
-    
+
     QTTSSessionEnd(sessionID, "END");
+
+    int len = 0;
+    pipe.write(&len, sizeof(int), 1);
 }
 
-static void generate_child()
+void Generate::generate_child()
 {
     int errcode = MSP_SUCCESS;
     const char* login_params = "appid = 5a2e1454, work_dir = .";
     errcode = MSPLogin(NULL, NULL, login_params);
     if (MSP_SUCCESS != errcode)
-    {
-        fprintf(stderr, "MSPLogin() failed.\n");
-        throw "MSPLogin() failed.";
-    }
-        
+        throw std::runtime_error("MSPLogin() failed.");
     while(true)
         generate();
 }
 
-static void generate_parent()
+void Generate::generate_parent()
 {
-    {
-        int dummy;
-        myfread(&dummy, sizeof(int), 1, file_generate[0]);
-    }
+    char* buffer = new char[INPUT_TRUNKSIZE_BYTE];
+
     while(true)
     {
-        std::string str;
-        {
-            string_queue_use use{q_out};
-            str = *use;
-        }
-        int len = str.size() + 1;
-        myfwrite(&len, sizeof(int), 1, file_generate[1]);
-        myfwrite(str.c_str(), len, 1, file_generate[1]);
-        fflush(file_generate[1]);
+        std::string str = queue_out->pop();
+        int len = str.length() + 1;
+        pipe.write(&len, sizeof(int), 1);
+        pipe.write(str.c_str(), len, 1);
 
+        socketpipe->sendmsg(Message::construct(Message::Type::SpeechBegin));
         while(true)
         {
-            int curr;
-            myfread(&curr, sizeof(int), 1, file_generate[0]);
-            if(!curr)
+            int status;
+            pipe.read(&status, sizeof(int), 1);
+            if(status == 0)
                 break;
-            myfread(generate_buffer, BUFFER_SIZE, 1, file_generate[0]);
-            q_play.emplace(generate_buffer);
+            pipe.read(buffer, INPUT_TRUNKSIZE_BYTE, 1);
+            SpeechDataMessage *msg = new SpeechDataMessage();
+            msg->data.resize(INPUT_TRUNKSIZE);
+            memcpy(msg->data.data(), buffer, INPUT_TRUNKSIZE_BYTE);
+            socketpipe->sendmsg(msg);
         }
+        socketpipe->sendmsg(Message::construct(Message::Type::SpeechEnd));
     }
 }
 
-void* do_generate(void*)
+void Generate::do_generate()
 {
-#ifdef USE_STDOUT
-    while(true)
+    if (pipe.fork())
     {
-        string_queue_use use{q_out};
-        printf("%s\n", (*use).c_str());
-    }
-#endif
-
-    pid_t pid;
-    int pipe_generate[2][2];
-    if(pipe(pipe_generate[0]) || pipe(pipe_generate[1]))
-    {
-        fprintf(stderr, "pipe error\n");
-        throw "pipe error";
-    }
-
-    pid = fork();
-    if(pid == 0)
-    {
-        file_generate[0] = fdopen(pipe_generate[0][0], "r");
-        file_generate[1] = fdopen(pipe_generate[1][1], "w");
         generate_child();
     }
     else
     {
-        file_generate[0] = fdopen(pipe_generate[1][0], "r");
-        file_generate[1] = fdopen(pipe_generate[0][1], "w");
         generate_parent();
     }
-
-
-    return NULL;
 }

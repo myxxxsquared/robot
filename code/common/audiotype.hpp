@@ -12,6 +12,7 @@ const int INPUT_TRUNKSIZE = 160;
 const PaSampleFormat INPUT_FORMAT = paInt16;
 using INPUT_TYPE = short;
 const int INPUT_CHANNELS = 4;
+const int INPUT_TRUNKSIZE_BYTE = INPUT_TRUNKSIZE*sizeof(short);
 
 const int OUTPUT_SAMPLERATE = 16000;
 const int OUTPUT_TRUNKSIZE = 160;

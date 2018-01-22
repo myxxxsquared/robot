@@ -30,7 +30,5 @@ void MessageProcess::process_message()
         }
 
         processor(msg);
-
-        delete msg;
     }
 }

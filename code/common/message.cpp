@@ -54,29 +54,21 @@ AudioDataMessage::AudioDataMessage()
 {
 }
 
-AudioDataMessage::AudioDataMessage(const AudioInputStruct &d)
-    : Message(AudioData)
+AudioDataMessage::AudioDataMessage(const AudioInputArray &d)
+    : Message(AudioData), data(d)
 {
-    for (int i = 0; i < 4; ++i)
-        data.data[i] = d.data[i];
 }
 
 void AudioDataMessage::sendto(SocketPipe &pipe) const
 {
-    for (int i = 0; i < 4; ++i)
-    {
-        assert(data.data[i].size() == INPUT_TRUNKSIZE);
-        pipe.send(data.data[i].data(), INPUT_TRUNKSIZE * sizeof(INPUT_TYPE));
-    }
+    assert(data.data.size() == INPUT_TRUNKSIZE);
+    pipe.send(data.data(), INPUT_TRUNKSIZE * sizeof(INPUT_TYPE));
 }
 
 void AudioDataMessage::recvfrom(SocketPipe &pipe)
 {
-    for (int i = 0; i < 4; ++i)
-    {
-        data.data[i].resize(INPUT_TRUNKSIZE);
-        pipe.recv(data.data[i].data(), INPUT_TRUNKSIZE * sizeof(INPUT_TYPE));
-    }
+    data.resize(INPUT_TRUNKSIZE);
+    pipe.recv(data.data(), INPUT_TRUNKSIZE * sizeof(INPUT_TYPE));
 }
 
 

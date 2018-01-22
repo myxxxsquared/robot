@@ -4,6 +4,8 @@
 #include "msp_cmn.h"
 #include "msp_errors.h"
 
+#include <cstddef>
+
 void init_xf()
 {
     int errcode = MSP_SUCCESS;

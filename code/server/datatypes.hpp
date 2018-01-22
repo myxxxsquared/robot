@@ -1,8 +1,16 @@
 
-#include <portaudio.h>
+#ifndef DATATYPES_HEADER
+#define DATATYPES_HEADER
+
+// #include <portaudio.h>
 #include <cstring>
 #include <string>
 #include <deque>
+#include <mutex>
+#include <condition_variable>
+
+typedef unsigned long PaSampleFormat;
+#define paInt16          ((PaSampleFormat) 0x00000008)
 
 constexpr int CHANNEL_COUNT = 1;
 constexpr int SAMPLE_FORMAT = paInt16;
@@ -33,57 +41,35 @@ class SAFE_DEQUE
 {
 public:
     std::deque<T> queue;
-    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-    sem_t sem;
+    std::mutex mutex;
+    std::condition_variable cv;
 
     SAFE_DEQUE()
     {
-        sem_init(&sem, 0, 0);
     }
 
     ~SAFE_DEQUE()
     {
-        sem_destroy(&sem);
     }
 
     SAFE_DEQUE(const SAFE_DEQUE<T>&) = delete;
     SAFE_DEQUE<T>& operator=(const SAFE_DEQUE<T>&) = delete;
 
-    void begin_use()
-    {
-        while(true)
-        {
-            pthread_mutex_lock(&mutex);
-            if(queue.size() > 0)
-                return;
-            pthread_mutex_unlock(&mutex);
-            sem_wait(&sem);
-        }
-    }
-
-    bool try_begin_use()
-    {
-        pthread_mutex_lock(&mutex);
-        if(queue.size() > 0)
-            return true;
-        pthread_mutex_unlock(&mutex);
-        return false;
-    }
-
-    void end_use()
-    {
-        queue.pop_front();
-        pthread_mutex_unlock(&mutex);
-    }
-
     template<typename ... Types>
     void emplace(Types ... args)
     {
-        pthread_mutex_lock(&mutex);
+        std::unique_lock<std::mutex> lock{mutex};
         queue.emplace_back(args ...);
-        sem_trywait(&sem);
-        sem_post(&sem);
-        pthread_mutex_unlock(&mutex);
+        cv.notify_one();
+    }
+
+    T pop()
+    {
+        std::unique_lock<std::mutex> lock{mutex};
+        cv.wait(lock, [&](){return !queue.empty();});
+        T result = std::move(queue.front());
+        queue.pop_front();
+        return result;
     }
 };
 
@@ -94,17 +80,29 @@ public:
     SAFE_DEQUE<T> &queue;
     bool vaild;
 
+    std::unique_lock<std::mutex> mutex;
+
     SAFE_DEQUE_USE(SAFE_DEQUE<T>& q, bool tryget = false)
         : queue(q)
     {
+        mutex = std::unique_lock<std::mutex>(q.mutex);
+
         if(!tryget)
         {
-            queue.begin_use();
-            vaild=true;
+            q.cv.wait(mutex, [&](){ return !q.queue.empty(); });
+            vaild = true;
         }
         else
         {
-            vaild = queue.try_begin_use();
+            if(q.queue.empty())
+            {
+                vaild = false;
+                mutex.release();
+            }
+            else
+            {
+                vaild = true;
+            }
         }
     }
 
@@ -117,7 +115,7 @@ public:
     void release()
     {
         if(vaild)
-            queue.end_use();
+            mutex.release();
         vaild=false;
     }
 
@@ -129,7 +127,6 @@ public:
         return queue.queue.front();
     }
 };
-
 
 typedef SAFE_DEQUE<BUFFER> frame_queue;
 typedef SAFE_DEQUE_USE<BUFFER> frame_queue_use;
@@ -147,3 +144,5 @@ inline void myfwrite(const void* data, int size, int count, FILE* file)
     if((int)fwrite(data, size, count, file) != count)
         throw "Writing Error!";
 }
+
+#endif
