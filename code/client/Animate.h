@@ -44,8 +44,9 @@ const std::vector<RobotState> IdleStateLst = {
         CenterState, LeftState };
 
 StateSeries GetNodSeries();
-
 StateSeries GetSpeakSeries();
+StateSeries GetRightSeries();
+StateSeries GetLeftSeries();
 
 class Animate{
 private:

@@ -20,7 +20,8 @@ InputProcess *pinp;
 Animate* p_animate;
 auto SpeakSeries = GetSpeakSeries();
 auto NodSeries = GetNodSeries();
-
+auto LeftSeries = GetLeftSeries();
+auto RightSeries = GetRightSeries();
 void ProcessMessageClinet(const Message *msg)
 {
     switch (msg->type)
@@ -35,7 +36,11 @@ void ProcessMessageClinet(const Message *msg)
         break;
     case Message::Type::DOA:
     {
-
+        auto msg2 = dynamic_cast<const DOAMessage *>(msg);
+        if (msg2->angle > 0)
+            p_animate->SetContinuousWork(RightSeries);
+        else
+            p_animate->SetContinuousWork(LeftSeries);
     }
         break;
     case Message::Type::GazeBegin:

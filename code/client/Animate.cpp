@@ -24,6 +24,26 @@ StateSeries GetSpeakSeries(){
     return SpeakSS;
 }
 
+StateSeries GetRightSeries(){
+    StateSeries RSS;
+    RSS.v_robot_state.push_back(RightState);
+    RSS.v_robot_state.push_back(VoidState);
+    RSS.v_robot_state.push_back(VoidState);
+    RSS.v_robot_state.push_back(VoidState);
+    RSS.v_robot_state.push_back(VoidState);
+    return RSS;
+}
+
+StateSeries GetLeftSeries(){
+    StateSeries RSS;
+    RSS.v_robot_state.push_back(LeftState);
+    RSS.v_robot_state.push_back(VoidState);
+    RSS.v_robot_state.push_back(VoidState);
+    RSS.v_robot_state.push_back(VoidState);
+    RSS.v_robot_state.push_back(VoidState);
+    return RSS;
+}
+
 Animate::Animate(Robot* r){
     p_serial = nullptr;
     p_robot = r;
