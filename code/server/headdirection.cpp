@@ -84,6 +84,9 @@ void HeadDirection::process_proc()
     estimator.opticalCenterX = 320;
     estimator.opticalCenterY = 240;
 
+    int delay = 0;
+    bool current = true;
+
     while(true)
     {
         {
@@ -95,27 +98,66 @@ void HeadDirection::process_proc()
         auto all_features = estimator.update(frame);
         auto poses = estimator.poses();
 
+        bool haveface = false;
+
         for (auto pose : poses)
         {
-            pose = pose.inv();
-            double raw_yaw, raw_pitch, raw_roll;
-            tf::Matrix3x3 mrot(
-                pose(0, 0), pose(0, 1), pose(0, 2),
-                pose(1, 0), pose(1, 1), pose(1, 2),
-                pose(2, 0), pose(2, 1), pose(2, 2));
-            mrot.getRPY(raw_roll, raw_pitch, raw_yaw);
-            raw_roll = raw_roll - M_PI / 2;
-            raw_yaw = raw_yaw + M_PI / 2;
+//            pose = pose.inv();
+//            double raw_yaw, raw_pitch, raw_roll;
+//            tf::Matrix3x3 mrot(
+//                pose(0, 0), pose(0, 1), pose(0, 2),
+//                pose(1, 0), pose(1, 1), pose(1, 2),
+//                pose(2, 0), pose(2, 1), pose(2, 2));
+//            mrot.getRPY(raw_roll, raw_pitch, raw_yaw);
+//            raw_roll = raw_roll - M_PI / 2;
+//            raw_yaw = raw_yaw + M_PI / 2;
+//
+//            double yaw, pitch, roll;
+//            roll = raw_pitch;
+//            yaw = raw_yaw;
+//            pitch = -raw_roll;
 
-            double yaw, pitch, roll;
-            roll = raw_pitch;
-            yaw = raw_yaw;
-            pitch = -raw_roll;
+            haveface = true;
 
             // throw "TODO: SEND MESSAGE HERE";
             // TODO: SEND MESSAGE HERE
             // cout << setprecision(1) << fixed << "{\"yaw\":" << todeg(yaw) << ", \"pitch\":" << todeg(pitch) << ", \"roll\":" << todeg(roll) << ",";
             // cout << setprecision(4) << fixed << "\"x\":" << pose(0, 3) << ", \"y\":" << pose(1, 3) << ", \"z\":" << pose(2, 3) << "},";
+        }
+
+        if(current)
+        {
+            if(haveface)
+            {
+                delay = 0;
+            }
+            else
+            {
+                delay++;
+                if(delay > 5)
+                {
+                    current = false;
+                    pipe->sendmsg_tag(Message::Type::GazeEnd);
+                    delay = 0;
+                }
+            }
+        }
+        else
+        {
+            if(haveface)
+            {
+                delay++;
+                if(delay > 2)
+                {
+                    current = true;
+                    pipe->sendmsg_tag(Message::Type::GazeBegin);
+                    delay = 0;
+                }
+            }
+            else
+            {
+                delay = 0;
+            }
         }
     }
 }
