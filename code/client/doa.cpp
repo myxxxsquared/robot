@@ -5,6 +5,7 @@
 #include "doa.hpp"
 
 #include <cmath>
+#include <iostream>
 
 const double SOUND_SPEED = 343.2;
 const double MIC_DISTANCE_4 = 0.08127;
@@ -13,31 +14,42 @@ const double PI = 3.14159265358979323846264338328;
 
 double gcc_phat(const CArray &sig, const CArray &refsig, intptr_t fs, double max_tau, size_t interp)
 {
-    intptr_t n = sig.size() + refsig.size();
+    size_t n = sig.size() + refsig.size();
 
     CArray R;
 
     {
-        CArray SIG = sig;
+        CArray SIG;
         SIG.resize(n, 0);
+        for (size_t i = 0; i < sig.size(); ++i) {
+            SIG[i] = sig[i];
+        }
         fft(SIG);
-        CArray REFSIG = refsig;
+        CArray REFSIG;
         REFSIG.resize(n, 0);
+        for (size_t i = 0; i < refsig.size(); ++i) {
+            REFSIG[i] = refsig[i];
+        }
         fft(REFSIG);
-
         R = SIG * REFSIG.apply(std::conj);
         R = R.apply([](Complex x) {return x/std::abs(x);});
+
+        CArray tmp_R = R;
         R.resize(n*interp);
+        for (size_t i = 0; i < tmp_R.size(); ++i) {
+            R[i] = tmp_R[i];
+        }
         ifft(R);
+
     }
 
     intptr_t max_shift = interp * n / 2;
     max_shift = std::min(max_shift, (intptr_t)(interp * fs * max_tau));
 
-    intptr_t shift = 0;
+    size_t shift = 0;
     double maxabs = 0;
 
-    for(intptr_t i = 0; i < max_shift; ++i)
+    for(size_t i = 0; i < max_shift; ++i)
     {
         double curabs = std::abs(R[i]);
         if(curabs > maxabs)
