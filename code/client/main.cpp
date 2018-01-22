@@ -6,6 +6,7 @@
 #include "debug_throw.hpp"
 #include "Animate.h"
 #include "StateSeries.h"
+#include <iostream>
 
 #ifdef __CYGWIN__
 #define PORT "/dev/ttyS3"
@@ -30,6 +31,7 @@ void ProcessMessageClinet(const Message *msg)
     {
         std::unique_lock<std::mutex> lock(parray->queue_output.mutex);
         parray->queue_output.queue.clear();
+        std::cout<<"--- AudioBegin RECV"<<std::endl;
     }
         break;
     case Message::Type::AudioEnd:
