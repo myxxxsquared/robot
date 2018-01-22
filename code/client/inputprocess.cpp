@@ -16,7 +16,7 @@
 const int INPUT_DOA_TRUNKS = 20;
 
 const int ON_CHANGE = 20;
-const int OFF_CHANGE = 20;
+const int OFF_CHANGE = 40;
 const int OFF_APPEND_DATA = 40;
 const int DATA_MAX_SIZE = 40;
 
@@ -27,7 +27,8 @@ InputProcess::InputProcess(MicArray *m, SocketPipe *p, MessageProcess *pr)
         micarray(m),
         vad(),
         pipe(p),
-        proc(pr)
+        proc(pr),
+        working(true)
 {
     vad.setmode(3);
     assert(VAD::check_vaild(INPUT_SAMPLERATE, INPUT_TRUNKSIZE));
@@ -64,6 +65,9 @@ void InputProcess::thread_func()
     {
         buffer = micarray->fetch_next_input();
 
+        if(!working)
+            continue;
+
         AudioInputStruct data;
         for (intptr_t i = 0; i < INPUT_CHANNELS; ++i)
             data.data[i].resize(INPUT_TRUNKSIZE);
@@ -81,18 +85,20 @@ void InputProcess::thread_func()
 
         if (curraudio)
         {
-            // doainputs.emplace_back(data);
-            // if (doainputs.size() == INPUT_DOA_TRUNKS)
-            // {
-                // AudioInputArray doadata[4];
-                // for (int i = 0; i < 4; ++i)
-                //     doadata[i].resize(INPUT_DOA_TRUNKS * INPUT_TRUNKSIZE);
-                // for (intptr_t i = 0; i < INPUT_DOA_TRUNKS; ++i)
-                //     for (int j = 0; j < 4; ++j)
-                //         memcpy(&doadata[j][i * INPUT_TRUNKSIZE], doainputs[i].data[j].data(), sizeof(INPUT_TYPE) * INPUT_TRUNKSIZE);
-                // doa_result(doa(doadata));
-                // doainputs.clear();
-            // }
+            doainputs.emplace_back(data);
+            if (doainputs.size() == INPUT_DOA_TRUNKS)
+            {
+                AudioInputArray doadata[4];
+                for (int i = 0; i < 4; ++i)
+                    doadata[i].resize(INPUT_DOA_TRUNKS * INPUT_TRUNKSIZE);
+                for (intptr_t i = 0; i < INPUT_DOA_TRUNKS; ++i)
+                    for (int j = 0; j < 4; ++j)
+                        for(int k = 0; k < INPUT_TRUNKSIZE; ++k)
+                            doadata[j].at(i*INPUT_TRUNKSIZE) = doainputs.at(i).data[j].at(k);
+                        // memcpy(doadata[j].data() + i * INPUT_TRUNKSIZE, doainputs[i].data[j].data(), sizeof(INPUT_TYPE) * INPUT_TRUNKSIZE);
+                doa_result(doa(doadata));
+                doainputs.clear();
+            }
 
             send(data);
             if (cur)
@@ -148,6 +154,7 @@ void InputProcess::send(const AudioInputStruct &data)
 
 void InputProcess::doa_result(double angle)
 {
+    printf("angle: %lf\n", angle);
     Message *msg = new DOAMessage(angle);
     proc->put_message(msg);
 }

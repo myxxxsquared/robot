@@ -12,6 +12,7 @@ add_subdirectory(portaudio portaudio)
 find_package(Threads REQUIRED)
 # find_package(Portaudio REQUIRED)
 find_package(RT REQUIRED)
+find_package(FFTW REQUIRED)
 
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
@@ -30,14 +31,17 @@ include_directories(
     ${CMAKE_SOURCE_DIR}
     ${PORTAUDIO_INCLUDE_DIRS}
     ${RT_INCLUDES}
+    ${FFTW_INCLUDES}
     ${CMAKE_SOURCE_DIR}/../common
-    ${CMAKE_SOURCE_DIR}/portaudio/include)
+    ${CMAKE_SOURCE_DIR}/portaudio/include
+    ${CMAKE_SOURCE_DIR}/xcorr)
 
 aux_source_directory(${CMAKE_SOURCE_DIR} ROOT_SOURCES)
 aux_source_directory(${CMAKE_SOURCE_DIR}/../common COMMON_SOURCES)
-aux_source_directory(gpio GPIO_SOURCES)
-aux_source_directory(webrtc/common_audio/vad VAD_SOURCES)
-aux_source_directory(webrtc/common_audio/signal_processing SIG_SOURCES)
+aux_source_directory(${CMAKE_SOURCE_DIR}/gpio GPIO_SOURCES)
+aux_source_directory(${CMAKE_SOURCE_DIR}/webrtc/common_audio/vad VAD_SOURCES)
+aux_source_directory(${CMAKE_SOURCE_DIR}/webrtc/common_audio/signal_processing SIG_SOURCES)
+aux_source_directory(${CMAKE_SOURCE_DIR}/xcorr XCORR_SOURCES)
 
 set(SERIAL_SOURCES
     serial/serial.cc
@@ -50,7 +54,8 @@ add_executable(chatrobotclient
     ${SERIAL_SOURCES}
     ${GPIO_SOURCES}
     ${VAD_SOURCES}
-    ${SIG_SOURCES})
+    ${SIG_SOURCES}
+    ${XCORR_SOURCES})
 
 target_link_libraries(chatrobotclient
     # ${PORTAUDIO_LIBRARIES}
@@ -58,4 +63,5 @@ target_link_libraries(chatrobotclient
     # ${Boost_LIBRARIES}
     ${RT_LIBRARIES}
     Threads::Threads
+    ${FFTW_LIBRARIES}
     )

@@ -23,6 +23,8 @@ class InputProcess
     SocketPipe *pipe;
     MessageProcess *proc;
 
+    volatile bool working;
+
 
     InputProcess(MicArray *m, SocketPipe *p, MessageProcess *pr);
     InputProcess(const InputProcess &) = delete;
