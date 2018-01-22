@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include "micarray.hpp"
+#include "debug_throw.hpp"
 
 void MicArray::init_stream()
 {
@@ -16,14 +17,14 @@ void MicArray::init_stream()
     if (paNoError != err)
     {
         sprintf(buffer, "Pa_Initialize() returned %d.", err);
-        throw std::runtime_error(buffer);
+        my_throw(buffer);
     }
 
     int numDevices = Pa_GetDeviceCount();
     if (numDevices < 0)
     {
         sprintf(buffer, "Pa_GetDeviceCount() returned %d.", err);
-        throw std::runtime_error(buffer);
+        my_throw(buffer);
     }
 
     int input_device = -1, output_device = -1;
@@ -47,9 +48,9 @@ void MicArray::init_stream()
     }
 
     if (input_device == -1)
-        throw std::runtime_error("Cannot find input device!");
+        my_throw("Cannot find input device!");
     if (output_device == -1)
-        throw std::runtime_error("Cannot find output device!");
+        my_throw("Cannot find output device!");
     fprintf(stderr, "Device %d selected as input.\nDevice %d selected as output.\n", input_device, output_device);
 
     paramsinput.device = input_device;
@@ -68,8 +69,8 @@ void MicArray::init_stream()
         this);
     if (paNoError != err)
     {
-        sprintf(buffer, "Pa_OpenStream(INPUT) returned %d.", err);
-        throw std::runtime_error(buffer);
+        sprintf(buffer, "Pa_OpenStream(INPUT) returned %d, %s.", err, Pa_GetErrorText(err));
+        my_throw(buffer);
     }
 
     paramsoutput.device = output_device;
@@ -78,18 +79,18 @@ void MicArray::init_stream()
     paramsoutput.hostApiSpecificStreamInfo = NULL;
     paramsoutput.suggestedLatency = output_device_info->defaultLowOutputLatency;
     err = Pa_OpenStream(
-        &stream_input,
+        &stream_output,
         NULL,
         &paramsoutput,
         OUTPUT_SAMPLERATE,
         OUTPUT_TRUNKSIZE,
         paNoFlag,
-        MicArray::inputCallback_static,
+        MicArray::outputCallback_static,
         this);
     if (paNoError != err)
     {
-        sprintf(buffer, "Pa_OpenStream(OUTPUT) returned %d.", err);
-        throw std::runtime_error(buffer);
+        sprintf(buffer, "Pa_OpenStream(OUTPUT) returned %d, %s.", err, Pa_GetErrorText(err));
+        my_throw(buffer);
     }
 }
 
@@ -111,7 +112,7 @@ int MicArray::inputCallback(
 {
     std::lock_guard<std::mutex> lock(this->mutex_input);
     this->deque_input.emplace_back();
-    memcpy(&this->deque_input.back(), input, sizeof(AudioInputBuffer));
+    memcpy(this->deque_input.back().data, input, sizeof(AudioInputBuffer));
     this->cv_input.notify_one();
     return paContinue;
 }
@@ -165,14 +166,14 @@ void MicArray::start()
     err = Pa_StartStream(stream_input);
     if (paNoError != err)
     {
-        sprintf(buffer, "Pa_StartStream(INPUT) returned %d.", err);
-        throw std::runtime_error(buffer);
+        sprintf(buffer, "Pa_StartStream(INPUT) returned %d, %s.", err, Pa_GetErrorText(err));
+        my_throw(buffer);
     }
 
     err = Pa_StartStream(stream_output);
     if (paNoError != err)
     {
-        sprintf(buffer, "Pa_StartStream(OUTPUT) returned %d.", err);
-        throw std::runtime_error(buffer);
+        sprintf(buffer, "Pa_StartStream(OUTPUT) returned %d, %s.", err, Pa_GetErrorText(err));
+        my_throw(buffer);
     }
 }

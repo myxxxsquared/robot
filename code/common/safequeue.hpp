@@ -78,14 +78,16 @@ public:
 
     ~safe_queue_use()
     {
-        if(vaild)
-            release();
+        release();
     }
 
     void release()
     {
         if(vaild)
+        {
             mutex.release();
+            queue.queue.pop_front();
+        }
         vaild=false;
     }
 

@@ -2,6 +2,8 @@
 #include "message.hpp"
 #include "socketpipe.hpp"
 
+#include "debug_throw.hpp"
+
 #include <cassert>
 
 Message::Message()
@@ -46,7 +48,7 @@ Message *Message::construct(Message::Type t)
         return new DOAMessage();
     }
 
-    throw std::runtime_error("Invild type");
+    my_throw("Invild type");
 }
 
 AudioDataMessage::AudioDataMessage()
@@ -61,7 +63,7 @@ AudioDataMessage::AudioDataMessage(const AudioInputArray &d)
 
 void AudioDataMessage::sendto(SocketPipe &pipe) const
 {
-    assert(data.data.size() == INPUT_TRUNKSIZE);
+    assert(data.size() == INPUT_TRUNKSIZE);
     pipe.send(data.data(), INPUT_TRUNKSIZE * sizeof(INPUT_TYPE));
 }
 

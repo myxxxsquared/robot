@@ -54,6 +54,10 @@ void Dialog::dialog()
         poststr = result["text"];
     }
 
+#ifdef DEBUG
+    printf("DIALOG: %s\n", poststr.c_str());
+#endif
+
     queue_out->emplace(std::move(poststr));
 }
 

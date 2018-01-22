@@ -2,17 +2,18 @@
 #include "forkandpipe.hpp"
 #include <stdexcept>
 
+#include "debug_throw.hpp"
 
 bool ForkAndPipe::fork()
 {
     int pipe_recognize[2][2];
     if (pipe(pipe_recognize[0]) || pipe(pipe_recognize[1]))
-        throw std::runtime_error("pipe() failed.");
+        my_throw("pipe() failed.");
 
     pid = ::fork();
 
     if (-1 == pid)
-        throw std::runtime_error("fork() failed.");
+        my_throw("fork() failed.");
 
     if (pid == 0)
     {
@@ -32,13 +33,13 @@ void ForkAndPipe::read(void *data, size_t size, size_t count)
 {
     size_t r = fread(data, size, count, file_r);
     if (r != count)
-        throw std::runtime_error("fread count is incorrect");
+        my_throw("fread count is incorrect");
 }
 
 void ForkAndPipe::write(const void *data, size_t size, size_t count)
 {
     size_t r = fwrite(data, size, count, file_w);
     if (r != count)
-        throw std::runtime_error("fwrite count is incorrect");
+        my_throw("fwrite count is incorrect");
     fflush(file_w);
 }

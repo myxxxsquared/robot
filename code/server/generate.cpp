@@ -14,6 +14,8 @@
 
 #include "generate.hpp"
 
+#include "debug_throw.hpp"
+
 Generate::Generate(SocketPipe *sp, safe_queue<std::string> *q)
     : socketpipe(sp), queue_out(q)
 {
@@ -36,11 +38,11 @@ void Generate::generate()
     const char* params = "voice_name = xiaofeng, text_encoding = utf8, sample_rate = 16000, speed = 50, volume = 50, pitch = 50, rdn = 2";
     const char* sessionID = QTTSSessionBegin(params, &ret);
     if (MSP_SUCCESS != ret)
-        throw std::runtime_error("QTTSSessionBegin() failed");
+        my_throw("QTTSSessionBegin() failed");
 
     ret = QTTSTextPut(sessionID, str.c_str(), str.size(), NULL);
     if (MSP_SUCCESS != ret)
-        throw std::runtime_error("QTTSTextPut() failed");
+        my_throw("QTTSTextPut() failed");
 
     unsigned int audio_len = 0;
     int synth_status = MSP_TTS_FLAG_STILL_HAVE_DATA;
@@ -96,7 +98,7 @@ void Generate::generate()
     }
 
     if (MSP_SUCCESS != ret)
-        throw std::runtime_error("QTTSAudioGet() failed");
+        my_throw("QTTSAudioGet() failed");
 
     if(tempbufferlen)
     {
@@ -119,7 +121,7 @@ void Generate::generate_child()
     const char* login_params = "appid = 5a2e1454, work_dir = .";
     errcode = MSPLogin(NULL, NULL, login_params);
     if (MSP_SUCCESS != errcode)
-        throw std::runtime_error("MSPLogin() failed.");
+        my_throw("MSPLogin() failed.");
     while(true)
         generate();
 }

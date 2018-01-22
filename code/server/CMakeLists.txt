@@ -3,9 +3,6 @@ cmake_minimum_required(VERSION 3.5)
 
 project(chatrobotserver)
 
-add_subdirectory(gazr gazr)
-add_subdirectory(curlpp curlpp)
-
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/../common/CMake")
 
 find_package(Threads REQUIRED)
@@ -19,6 +16,9 @@ else()
     set(CMAKE_CXX_FLAGS "-flto -Wall -O3 -g -std=gnu++14 -DNDEBUG")
     set(CMAKE_EXE_LINKER_FLAGS "-flto -Wall -O3 -g -Wl,--no-as-needed")
 endif()
+
+add_subdirectory(gazr gazr)
+add_subdirectory(curlpp curlpp)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}

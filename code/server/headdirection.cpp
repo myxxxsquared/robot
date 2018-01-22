@@ -6,6 +6,7 @@
 #include "head_pose_estimation.hpp"
 
 #include "headdirection.hpp"
+#include "debug_throw.hpp"
 
 using namespace std;
 using namespace cv;
@@ -19,7 +20,7 @@ inline double todeg(double rad)
 #include <mutex>
 
 const char *const VIDEO_ADDRESS = "tcp://192.168.1.101:9000";
-const char *const HEAD_POSE_DATA = "data/shape_predictor_68_face_landmarks.dat";
+const char *const HEAD_POSE_DATA = "../data/shape_predictor_68_face_landmarks.dat";
 
 HeadDirection::HeadDirection(SocketPipe *p)
     : pipe(p), started(false)
@@ -52,7 +53,7 @@ void HeadDirection::capture_proc()
     cap.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
 
     if (!cap.isOpened())
-        throw std::runtime_error("VideoCapture failed.");
+        my_throw("VideoCapture failed.");
 
     Mat *m1, *m2, *temp;
     m1 = new Mat();

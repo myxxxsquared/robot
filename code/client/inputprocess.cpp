@@ -29,7 +29,7 @@ InputProcess::InputProcess(MicArray *m, SocketPipe *p, MessageProcess *pr)
         pipe(p),
         proc(pr)
 {
-    vad.setmode(1);
+    vad.setmode(3);
     assert(VAD::check_vaild(INPUT_SAMPLERATE, INPUT_TRUNKSIZE));
 }
 
@@ -72,24 +72,27 @@ void InputProcess::thread_func()
 
         bool cur = vad.process(INPUT_SAMPLERATE, data.data[0].data(), INPUT_TRUNKSIZE);
 
+        // printf("%d", (int)cur);
+        fflush(stdout);
+
         inputs.emplace_back(data);
         if (inputs.size() > DATA_MAX_SIZE)
             inputs.pop_front();
 
         if (curraudio)
         {
-            doainputs.emplace_back(data);
-            if (doainputs.size() == INPUT_DOA_TRUNKS)
-            {
-                AudioInputArray doadata[4];
-                for (int i = 0; i < 4; ++i)
-                    doadata[i].resize(INPUT_DOA_TRUNKS * INPUT_TRUNKSIZE);
-                for (intptr_t i = 0; i < INPUT_DOA_TRUNKS; ++i)
-                    for (int j = 0; j < 4; ++j)
-                        memcpy(&doadata[j][i * INPUT_TRUNKSIZE], doainputs[i].data[j].data(), sizeof(INPUT_TYPE) * INPUT_TRUNKSIZE);
-                doa_result(doa(doadata));
-                doainputs.clear();
-            }
+            // doainputs.emplace_back(data);
+            // if (doainputs.size() == INPUT_DOA_TRUNKS)
+            // {
+                // AudioInputArray doadata[4];
+                // for (int i = 0; i < 4; ++i)
+                //     doadata[i].resize(INPUT_DOA_TRUNKS * INPUT_TRUNKSIZE);
+                // for (intptr_t i = 0; i < INPUT_DOA_TRUNKS; ++i)
+                //     for (int j = 0; j < 4; ++j)
+                //         memcpy(&doadata[j][i * INPUT_TRUNKSIZE], doainputs[i].data[j].data(), sizeof(INPUT_TYPE) * INPUT_TRUNKSIZE);
+                // doa_result(doa(doadata));
+                // doainputs.clear();
+            // }
 
             send(data);
             if (cur)

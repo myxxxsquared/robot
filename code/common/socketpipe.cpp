@@ -12,6 +12,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "debug_throw.hpp"
+
 SocketPipe::SocketPipe(MessageProcess* p)
     : proc(p)
 {
@@ -25,11 +27,11 @@ void SocketPipe::init(bool server, const char *ip, int port)
     {
         int server_fd;
         if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
-            throw std::runtime_error("socket failed");
+            my_throw("socket failed");
         int opt = 1;
 #ifndef __CYGWIN__
         if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
-            throw std::runtime_error("setsockopt failed");
+            my_throw("setsockopt failed");
 #endif
 
         addr_self.sin_family = AF_INET;
@@ -37,29 +39,29 @@ void SocketPipe::init(bool server, const char *ip, int port)
         addr_self.sin_port = htons(port);
 
         if (bind(server_fd, (struct sockaddr *)&addr_self, sizeof(addr_self)) < 0)
-            throw std::runtime_error("bind failed");
+            my_throw("bind failed");
 
         if (listen(server_fd, 3) < 0)
-            throw std::runtime_error("listen failed");
+            my_throw("listen failed");
 
         int addrlen = sizeof(struct sockaddr_in);
         if ((socketval = accept(server_fd, (struct sockaddr *)&addr_other, (socklen_t *)&addrlen)) < 0)
-            throw std::runtime_error("accept failed");
+            my_throw("accept failed");
     }
     else
     {
         if ((socketval = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-            throw std::runtime_error("socket failed");
+            my_throw("socket failed");
 
         memset(&addr_other, '0', sizeof(addr_other));
         addr_other.sin_family = AF_INET;
         addr_other.sin_port = htons(port);
 
         if (inet_pton(AF_INET, ip, &addr_other.sin_addr) <= 0)
-            throw std::runtime_error("inet_pton failed");
+            my_throw("inet_pton failed");
 
         if (connect(socketval, (struct sockaddr *)&addr_other, sizeof(addr_other)) < 0)
-            throw std::runtime_error("connect failed");
+            my_throw("connect failed");
     }
 
     std::thread th{SocketPipe::recv_thread_static, this};
@@ -83,6 +85,7 @@ void SocketPipe::send_thread()
             std::unique_lock<std::mutex> lock{this->mutex_send};
             cv_send.wait(lock, [&](){return !queue_send.empty();});
             msg = queue_send.front();
+            queue_send.pop_front();
         }
 
         sendmsg_sync(msg);
@@ -97,27 +100,34 @@ void SocketPipe::send(const void *buffer, size_t n)
     {
         char buffer[64];
         sprintf(buffer, "send failed, %d", (int)errno);
-        throw std::runtime_error(buffer);
+        my_throw(buffer);
     }
     else if((intptr_t)result != (intptr_t)n)
     {
-        throw std::runtime_error("send length error!");
+        my_throw("send length error!");
     }
 }
 
 void SocketPipe::recv(void *buffer, size_t n)
 {
-    ssize_t result = ::recv(socketval, buffer, n, 0);
-    if(result == -1)
+    for(int i = 0; i < 1000 && n != 0; ++i)
     {
-        char buffer[64];
-        sprintf(buffer, "recv failed, %d", (int)errno);
-        throw std::runtime_error(buffer);
+        ssize_t result = ::recv(socketval, buffer, n, 0);
+        if(result == -1)
+        {
+            char buffer[64];
+            sprintf(buffer, "recv failed, %d", (int)errno);
+            my_throw(buffer);
+        }
+        else
+        {
+            n = (size_t)(n - result);
+            buffer = (void *)((intptr_t)buffer + (intptr_t)result);
+        }
     }
-    else if((intptr_t)result != (intptr_t)n)
-    {
-        throw std::runtime_error("recv length error!");
-    }
+
+    if(n != 0)
+        my_throw("recv length error!");
 }
 
 Message* SocketPipe::recvmsg()
