@@ -137,10 +137,10 @@ void InputProcess::send_tag(Message::Type tag)
 
 void InputProcess::send(const AudioInputStruct &data)
 {
-    AudioDataMessage *msg = new AudioDataMessage(data);
+    AudioDataMessage *msg = new AudioDataMessage(data.data[0]);
     pipe->sendmsg(msg);
-    msg = new AudioDataMessage(data);
-    proc->put_message(msg);
+    // msg = new AudioDataMessage(data.data[0]);
+    // proc->put_message(msg);
 }
 
 void InputProcess::doa_result(double angle)

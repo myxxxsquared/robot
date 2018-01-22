@@ -111,7 +111,7 @@ void HeadDirection::process_proc()
             yaw = raw_yaw;
             pitch = -raw_roll;
 
-            throw "TODO: SEND MESSAGE HERE";
+            // throw "TODO: SEND MESSAGE HERE";
             // TODO: SEND MESSAGE HERE
             // cout << setprecision(1) << fixed << "{\"yaw\":" << todeg(yaw) << ", \"pitch\":" << todeg(pitch) << ", \"roll\":" << todeg(roll) << ",";
             // cout << setprecision(4) << fixed << "\"x\":" << pose(0, 3) << ", \"y\":" << pose(1, 3) << ", \"z\":" << pose(2, 3) << "},";
