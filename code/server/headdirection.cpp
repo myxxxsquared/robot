@@ -144,7 +144,7 @@ void HeadDirection::process_proc()
                 {
                     current = false;
                     pipe->sendmsg_tag(Message::Type::GazeEnd);
-                    printf("GAZE: BEGIN\n");
+                    printf("GAZE: END\n");
                     delay = 0;
                 }
             }
@@ -158,7 +158,7 @@ void HeadDirection::process_proc()
                 {
                     current = true;
                     pipe->sendmsg_tag(Message::Type::GazeBegin);
-                    printf("GAZE: END\n");
+                    printf("GAZE: BEGIN\n");
                     delay = 0;
                 }
             }
